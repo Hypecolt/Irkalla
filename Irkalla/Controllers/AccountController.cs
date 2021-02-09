@@ -31,7 +31,7 @@ namespace Irkalla.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterPayload registerPayload)
         {
             try
@@ -66,7 +66,7 @@ namespace Irkalla.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginPayload loginPayload)
         {
             var foundUser = _db.Users.SingleOrDefault(u => u.Email == loginPayload.Email);

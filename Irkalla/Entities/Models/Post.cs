@@ -13,10 +13,14 @@ namespace Irkalla.Entities.Models
 
         public int UserId { get; set; }
 
-        public string Text { get; set; }
+        public string? Text { get; set; }
+
+        public Picture? Image { get; set; }
 
         public DateTime dateTime { get; set; }
 
         public int Likes { get; set; }
+
+        public List<Comment> Comment { get; set; }
     }
 }

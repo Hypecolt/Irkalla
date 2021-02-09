@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BC = BCrypt.Net.BCrypt;
 
 namespace Irkalla.Controllers
 {
@@ -52,6 +53,7 @@ namespace Irkalla.Controllers
                     FirstName = payload.FirstName,
                     LastName = payload.LastName,
                     Email = payload.Email,
+                    PasswordHash = BC.HashPassword(payload.Password),
                     Gender = payload.Gender
                 };
 
@@ -79,6 +81,7 @@ namespace Irkalla.Controllers
                     userToUpdate.FirstName = payload.FirstName;
                     userToUpdate.LastName = payload.LastName;
                     userToUpdate.Email = payload.Email;
+                    userToUpdate.PasswordHash = BC.HashPassword(payload.Password);
                     userToUpdate.Gender = payload.Gender;
 
                     _db.SaveChanges();
