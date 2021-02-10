@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Cors;
 
 namespace Irkalla
 {
@@ -41,6 +42,7 @@ namespace Irkalla
                 };
             });
 
+            services.AddCors();
             services.AddMvc();
 
             //dependency injection
@@ -61,6 +63,7 @@ namespace Irkalla
         {
             if (env.IsDevelopment())
             {
+                app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -74,6 +77,7 @@ namespace Irkalla
 
             app.UseAuthentication();
             app.UseRouting();
+            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

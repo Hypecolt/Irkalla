@@ -40,7 +40,7 @@ namespace Irkalla.Controllers
 
                 if (existingEmail)
                 {
-                    return new JsonResult(new { status = "false", message = "Email already in use." });
+                    return BadRequest(new { status = true, message = "Email already in use." });
                 }
 
                 var userToCreate = new User
@@ -77,13 +77,13 @@ namespace Irkalla.Controllers
                 {
                     var tokenString = GenerateJSONWebToken(foundUser);
 
-                    return Ok(new {status = true, token = tokenString });
+                    return Ok(new {status = true, token = tokenString , firstName = foundUser.FirstName});
                 }
-                return BadRequest(new { status = true, message = "Wrong password or email." });
+                return BadRequest(new { status = true, message = "Password does not match account username." });
             }
             else
             {
-                return BadRequest(new { status = true, message = "Wrong password or email." });
+                return BadRequest(new { status = true, message = "User does not exist." });
             }
 
         }

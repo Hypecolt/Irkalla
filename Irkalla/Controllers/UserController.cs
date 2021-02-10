@@ -4,11 +4,13 @@ using Irkalla.Payloads;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static Irkalla.Enums;
 using BC = BCrypt.Net.BCrypt;
 
 namespace Irkalla.Controllers
@@ -23,6 +25,46 @@ namespace Irkalla.Controllers
             _db = db;
         }
 
+        //user/searchusers?pageSize=10&pageNumber=sortType=0
+        [HttpGet("allUsers")]
+        public ActionResult<List<User>> ShowUsers(int pageSize, int pageNumber, UserSortType sortType)
+        {
+            var currentUser = HttpContext.User;
+
+            if (currentUser.HasClaim(claim => claim.Type == "Role"))
+            {
+                var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
+
+                if (role == "Admin" || role == "BasicUser")
+                {
+                    var usersQuery = _db.Users.AsNoTracking();
+
+                    switch (sortType)
+                    {
+                        case UserSortType.FirstNameAscendent: usersQuery = usersQuery.OrderBy(u => u.FirstName); break;
+                        case UserSortType.FirstNameDescendent: usersQuery = usersQuery.OrderByDescending(u => u.FirstName); break;
+                        case UserSortType.LasttNameAscendent: usersQuery = usersQuery.OrderBy(u => u.LastName); break;
+                        case UserSortType.LastNameDescendent: usersQuery = usersQuery.OrderByDescending(u => u.LastName); break;
+                        default: break;
+                    }
+
+                    usersQuery = usersQuery
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize);
+
+                    var users = usersQuery.ToList();
+                    
+                    return users;
+                }
+
+                return BadRequest(new { status = true, message = "Phantom user." });
+
+            }
+
+            return BadRequest(new { status = true, message = "Nice try hackerperson." });
+
+        }
+
         [HttpGet]
         public ActionResult<List<User>> GetAll()
         {
@@ -32,9 +74,10 @@ namespace Irkalla.Controllers
             {
                 var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
 
-                if(role == "Admin") return _db.Users.ToList();
+                if(role == "Admin" || role == "BasicUser") return _db.Users.ToList();
             }
-            return _db.Users.ToList();
+
+            return BadRequest(new { status = true, message = "Nice try hackerperson." });
         }
 
         [HttpGet]
