@@ -69,21 +69,28 @@ namespace Irkalla.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginPayload loginPayload)
         {
-            var foundUser = _db.Users.SingleOrDefault(u => u.Email == loginPayload.Email);
-
-            if(foundUser != null)
+            try
             {
-                if(BC.Verify(loginPayload.Password, foundUser.PasswordHash))  //if(foundUser.PasswordHash == BC.HashPassword(loginPayload.Password))
+                var foundUser = _db.Users.SingleOrDefault(u => u.Email == loginPayload.Email);
+
+                if (foundUser != null)
                 {
-                    var tokenString = GenerateJSONWebToken(foundUser);
+                    if (BC.Verify(loginPayload.Password, foundUser.PasswordHash))  //if(foundUser.PasswordHash == BC.HashPassword(loginPayload.Password))
+                    {
+                        var tokenString = GenerateJSONWebToken(foundUser);
 
-                    return Ok(new {status = true, token = tokenString , firstName = foundUser.FirstName});
+                        return Ok(new { status = true, token = tokenString, firstName = foundUser.FirstName });
+                    }
+                    return BadRequest(new { status = true, message = "Password does not match account username." });
                 }
-                return BadRequest(new { status = true, message = "Password does not match account username." });
+                else
+                {
+                    return BadRequest(new { status = true, message = "User does not exist." });
+                }
             }
-            else
+            catch (Exception)
             {
-                return BadRequest(new { status = true, message = "User does not exist." });
+                return new StatusCodeResult(StatusCodes.Status400BadRequest);
             }
 
         }

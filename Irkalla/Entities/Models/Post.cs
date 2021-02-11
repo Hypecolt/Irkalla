@@ -15,7 +15,7 @@ namespace Irkalla.Entities.Models
 
         public string? Text { get; set; }
 
-        public Picture? Image { get; set; }
+        public string Image { get; set; }
 
         public DateTime dateTime { get; set; }
 

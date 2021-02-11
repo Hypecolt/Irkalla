@@ -24,59 +24,77 @@ namespace Irkalla.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<Post>> ShowPosts(int pageSize, int pageNumber)
+        public IActionResult ShowPosts(int pageSize, int pageNumber)
         {
-            var currentUser = HttpContext.User;
-
-            if (currentUser.HasClaim(claim => claim.Type == "Role"))
+            try
             {
-                var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
+                var currentUser = HttpContext.User;
 
-                if (role == "Admin" || role == "BasicUser")
+                if (currentUser.HasClaim(claim => claim.Type == "Role"))
                 {
-                    var postsQuery = _db.Posts.AsNoTracking();
+                    var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
 
-                    postsQuery = postsQuery
-                    .Skip((pageNumber) * pageSize)
-                    .Take(pageSize);
+                    if (role == "Admin" || role == "BasicUser")
+                    {
+                        var posts = _db.Posts.AsNoTracking()
+                                                .Include(p => p.User)
+                                                .Skip((pageNumber) * pageSize)
+                                                .Take(pageSize)
+                                                .Select(p => new
+                                                {
+                                                    PostId = p.Id,
+                                                    PostText = p.Text,
+                                                    PostImage = p.Image,
+                                                    PostLikes = p.Likes,
+                                                    OwnerFirstName = p.User.FirstName,
+                                                    OwnerLastName = p.User.LastName,
+                                                })
+                                                .ToList();
 
-                    var posts = postsQuery.ToList();
+                        return Ok(posts);
+                    }
 
-                    return new JsonResult(new { posts = posts, userName = _db.Users.ToList().Single(user => posts.Single().UserId == user.Id)});
+                    return BadRequest(new { status = true, message = "Phantom user." });
+
                 }
 
-                return BadRequest(new { status = true, message = "Phantom user." });
-
+                return BadRequest(new { status = true, message = "Nice try hackerperson." });
             }
-
-            return BadRequest(new { status = true, message = "Nice try hackerperson." });
+            catch (Exception ex)
+            {
+                return BadRequest(new { status = true, message = "N-ai voie." });
+            }
 
         }
 
         [HttpPost]
         public ActionResult<Post> Create([FromBody]PostPayload payload)
         {
-            var currentUser = HttpContext.User;
-
-            var currUserId = int.Parse(currentUser.Claims.FirstOrDefault(c => c.Type == "Id").Value);
-
-            var newPost = new Post
+            try
             {
-                UserId = currUserId,
+                var currentUser = HttpContext.User;
 
-                User = _db.Users.Where(user => currUserId == user.Id).Single(),
+                var currUserId = int.Parse(currentUser.Claims.FirstOrDefault(c => c.Type == "Id").Value);
 
-                Text = payload.Text,
+                var newPost = new Post
+                {
+                    UserId = currUserId,
+                    User = _db.Users.Where(user => currUserId == user.Id).Single(),
+                    Text = payload.Text,
+                    Image = payload.Image,
+                    dateTime = DateTime.UtcNow
+                };
 
-                Image = payload.Image,
+                _db.Posts.Add(newPost);
+                _db.SaveChanges();
 
-                dateTime = DateTime.UtcNow
-            };
+                return new JsonResult(new { status = true, message = "Post created successfully." });
+            }
+            catch (Exception)
+            {
 
-            _db.Add(newPost);
-            _db.SaveChanges();
-
-            return new JsonResult(new { status = true, message = "Post created successfully." });
+                return BadRequest(new { status = true, message = "Nu a mers sa postezi, n-ai drepturi." });
+            }
         }
     }
 }

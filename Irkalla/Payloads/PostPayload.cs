@@ -8,8 +8,10 @@ namespace Irkalla.Payloads
 {
     public class PostPayload
     {
+        public int? Id { get; set; }
+
         public string? Text { get; set; }
 
-        public Picture? Image { get; set; }
+        public string? Image { get; set; }
     }
 }

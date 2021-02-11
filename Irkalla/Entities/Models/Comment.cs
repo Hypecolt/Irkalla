@@ -13,6 +13,6 @@ namespace Irkalla.Entities.Models
 
         public String? Msg { get; set; }
 
-        public byte[]? Img { get; set; }
+        public string? Img { get; set; }
     }
 }

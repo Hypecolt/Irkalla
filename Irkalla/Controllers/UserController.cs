@@ -117,24 +117,20 @@ namespace Irkalla.Controllers
         {
             try
             {
-                if (payload.Id.HasValue)
-                {
-                    var userToUpdate = _db.Users.SingleOrDefault(user => payload.Id.Value == user.Id);
+                var currentUser = HttpContext.User;
 
-                    userToUpdate.FirstName = payload.FirstName;
-                    userToUpdate.LastName = payload.LastName;
-                    userToUpdate.Email = payload.Email;
-                    userToUpdate.PasswordHash = BC.HashPassword(payload.Password);
-                    userToUpdate.ProfilePicture = payload.ProfilePicture;
-                    userToUpdate.Gender = payload.Gender;
+                var currUserId = int.Parse(currentUser.Claims.FirstOrDefault(c => c.Type == "Id").Value);
+                var userToUpdate = _db.Users.SingleOrDefault(user => currUserId == user.Id);
 
-                    _db.SaveChanges();
-                    return Ok(userToUpdate);
-                }
-                else
-                {
-                    return new StatusCodeResult(StatusCodes.Status400BadRequest);
-                }
+                if (payload.FirstName != null) userToUpdate.FirstName = payload.FirstName;
+                if (payload.LastName != null) userToUpdate.LastName = payload.LastName;
+                if (payload.Email != null) userToUpdate.Email = payload.Email;
+                if (payload.Password != null) userToUpdate.PasswordHash = BC.HashPassword(payload.Password);
+                if (payload.ProfilePicture != null) userToUpdate.ProfilePicture = payload.ProfilePicture;
+                if (payload.Gender != null) userToUpdate.Gender = payload.Gender;
+
+                _db.SaveChanges();
+                return Ok(userToUpdate);
             }
             catch (Exception)
             {
