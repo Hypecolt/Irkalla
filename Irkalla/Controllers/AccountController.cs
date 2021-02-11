@@ -95,7 +95,8 @@ namespace Irkalla.Controllers
 
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("Role", user.Role)
+                new Claim("Role", user.Role),
+                new Claim("Id", user.Id.ToString())
             };
 
             var token = new JwtSecurityToken(_config["Jwt:Issuer"],

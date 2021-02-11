@@ -49,7 +49,7 @@ namespace Irkalla.Controllers
                     }
 
                     usersQuery = usersQuery
-                    .Skip((pageNumber - 1) * pageSize)
+                    .Skip((pageNumber) * pageSize)
                     .Take(pageSize);
 
                     var users = usersQuery.ToList();
@@ -125,6 +125,7 @@ namespace Irkalla.Controllers
                     userToUpdate.LastName = payload.LastName;
                     userToUpdate.Email = payload.Email;
                     userToUpdate.PasswordHash = BC.HashPassword(payload.Password);
+                    userToUpdate.ProfilePicture = payload.ProfilePicture;
                     userToUpdate.Gender = payload.Gender;
 
                     _db.SaveChanges();
