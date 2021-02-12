@@ -29,61 +29,113 @@ namespace Irkalla.Controllers
         [HttpGet("allUsers")]
         public ActionResult<List<User>> ShowUsers(int pageSize, int pageNumber, UserSortType sortType)
         {
-            var currentUser = HttpContext.User;
-
-            if (currentUser.HasClaim(claim => claim.Type == "Role"))
+            try
             {
-                var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
+                var currentUser = HttpContext.User;
 
-                if (role == "Admin" || role == "BasicUser")
+                if (currentUser.HasClaim(claim => claim.Type == "Role"))
                 {
-                    var usersQuery = _db.Users.AsNoTracking();
+                    var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
 
-                    switch (sortType)
+                    if (role == "Admin" || role == "BasicUser")
                     {
-                        case UserSortType.FirstNameAscendent: usersQuery = usersQuery.OrderBy(u => u.FirstName); break;
-                        case UserSortType.FirstNameDescendent: usersQuery = usersQuery.OrderByDescending(u => u.FirstName); break;
-                        case UserSortType.LasttNameAscendent: usersQuery = usersQuery.OrderBy(u => u.LastName); break;
-                        case UserSortType.LastNameDescendent: usersQuery = usersQuery.OrderByDescending(u => u.LastName); break;
-                        default: break;
+                        var usersQuery = _db.Users.AsNoTracking();
+
+                        switch (sortType)
+                        {
+                            case UserSortType.FirstNameAscendent: usersQuery = usersQuery.OrderBy(u => u.FirstName); break;
+                            case UserSortType.FirstNameDescendent: usersQuery = usersQuery.OrderByDescending(u => u.FirstName); break;
+                            case UserSortType.LasttNameAscendent: usersQuery = usersQuery.OrderBy(u => u.LastName); break;
+                            case UserSortType.LastNameDescendent: usersQuery = usersQuery.OrderByDescending(u => u.LastName); break;
+                            default: break;
+                        }
+
+                        usersQuery = usersQuery
+                        .Skip((pageNumber) * pageSize)
+                        .Take(pageSize);
+
+                        var users = usersQuery.ToList();
+
+                        return users;
                     }
 
-                    usersQuery = usersQuery
-                    .Skip((pageNumber) * pageSize)
-                    .Take(pageSize);
+                    return BadRequest(new { status = true, message = "Phantom user." });
 
-                    var users = usersQuery.ToList();
-                    
-                    return users;
                 }
 
-                return BadRequest(new { status = true, message = "Phantom user." });
-
+                return BadRequest(new { status = true, message = "Nice try hackerperson." });
             }
-
-            return BadRequest(new { status = true, message = "Nice try hackerperson." });
+            catch (Exception)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
 
         }
 
         [HttpGet]
         public ActionResult<List<User>> GetAll()
         {
-            var currentUser = HttpContext.User;
-
-            if(currentUser.HasClaim(claim=>claim.Type == "Role"))
+            try
             {
-                var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
+                var currentUser = HttpContext.User;
 
-                if(role == "Admin" || role == "BasicUser") return _db.Users.ToList();
+                if (currentUser.HasClaim(claim => claim.Type == "Role"))
+                {
+                    var role = currentUser.Claims.FirstOrDefault(c => c.Type == "Role").Value;
+
+                    if (role == "Admin" || role == "BasicUser") return _db.Users.ToList();
+                }
+
+                return BadRequest(new { status = true, message = "Nice try hackerperson." });
             }
-
-            return BadRequest(new { status = true, message = "Nice try hackerperson." });
+            catch (Exception)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpGet]
-        public ActionResult<User> GetById(int id)
+        public ActionResult<User> GetById()
         {
-            return _db.Users.Where(user=>id == user.Id).Single();
+
+            try
+            {
+                var currentUser = HttpContext.User;
+
+                var currUserId = int.Parse(currentUser.Claims.FirstOrDefault(c => c.Type == "Id").Value);
+
+                return _db.Users.Where(user => currUserId == user.Id).Single();
+            }
+            catch (Exception)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetDetails()
+        {
+
+            try
+            {
+                var currentUser = HttpContext.User;
+
+                var currUserId = int.Parse(currentUser.Claims.FirstOrDefault(c => c.Type == "Id").Value);
+
+                var details = _db.Users.Select(p => new
+                {
+                    userId = p.Id,
+                    userFirstName = p.FirstName,
+                    userLastName = p.LastName,
+                    userProfilePicture = p.ProfilePicture
+                }).Where(user => currUserId == user.userId).Single();
+
+                return Ok(details);
+            }
+            catch (Exception)
+            {
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPost]
